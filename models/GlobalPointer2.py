@@ -55,7 +55,7 @@ class DataMaker(object):
         all_inputs = []
         for sample in datas:
             inputs = self.tokenizer(
-                sample["sentence"],
+                sample["text"],
                 max_length=max_seq_len,
                 truncation=True,
                 padding="max_length",
@@ -64,7 +64,7 @@ class DataMaker(object):
             labels = None
             if data_type != "predict":
                 ent2token_spans = self.preprocessor.get_ent2token_spans(
-                    sample["sentence"], sample["entities"]
+                    sample["text"], sample["entity_list"]
                 )
                 labels = np.zeros((ent_type_size, max_seq_len, max_seq_len))
                 for start, end, label in ent2token_spans:

@@ -65,7 +65,7 @@ def load_data(data_path, data_type="train"):
         data_type (str, optional): 数据类型. Defaults to "train".
 
     Returns:
-        (json): train和valid中一条数据格式：{"sentence":"","entity_list":[(start, end, label), (start, end, label)...]}
+        (json): train和valid中一条数据格式：{"text":"","entity_list":[(start, end, label), (start, end, label)...]}
     """
     if data_type == "train" or data_type == "valid":
         datas = []
@@ -73,7 +73,7 @@ def load_data(data_path, data_type="train"):
             for line in f:
                 line = json.loads(line)
                 item = {}
-                item["sentence"] = line["sentence"]
+                item["text"] = line["text"]
                 item["entity_list"] = []
                 for k, v in line["label"].items():
                     for spans in v.values():
@@ -122,7 +122,7 @@ def data_generator(data_type="train"):
     # TODO:句子截取
     max_tok_num = 0
     for sample in all_data:
-        tokens = tokenizer(sample["sentence"])["input_ids"]
+        tokens = tokenizer(sample["text"])["input_ids"]
         max_tok_num = max(max_tok_num, len(tokens))
     assert (
         max_tok_num <= hyper_parameters["max_seq_len"]
