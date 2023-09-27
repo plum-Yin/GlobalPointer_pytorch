@@ -1,0 +1,40 @@
+2023-09-27 23:12:40,488 - modelscope - INFO - PyTorch version 2.0.1 Found.
+2023-09-27 23:12:40,488 - modelscope - INFO - Loading ast index from /root/autodl-tmp/GlobalPointer_pytorch/cache/ast_indexer
+2023-09-27 23:12:40,526 - modelscope - INFO - Loading done! Current index file version is 1.9.1, with md5 fba4430bb6aadac8c7fe83762e2a15a3 and a total number of 924 components indexed
+2023-09-27 23:12:40,782 - modelscope - INFO - Use user-specified model revision: v1.0.1
+2023-09-27 23:12:41,489 - modelscope - INFO - Use user-specified model revision: v1.0.1
+2023-09-27 23:12:41,905 - modelscope - INFO - initialize model from /root/autodl-tmp/GlobalPointer_pytorch/cache/modelscope/Llama-2-7b-ms
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:03<00:03,  3.00s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:03<00:00,  1.73s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:03<00:00,  1.92s/it]
+/root/miniconda3/envs/py8/lib/python3.8/site-packages/transformers/generation/configuration_utils.py:362: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0.9` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`. This was detected when initializing the generation config instance, which means the corresponding file may hold incorrect parameterization and should be fixed.
+  warnings.warn(
+/root/miniconda3/envs/py8/lib/python3.8/site-packages/transformers/generation/configuration_utils.py:367: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.6` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`. This was detected when initializing the generation config instance, which means the corresponding file may hold incorrect parameterization and should be fixed.
+  warnings.warn(
+2023-09-27 23:12:47,664 - modelscope - INFO - Use user-specified model revision: v1.0.1
+  0%|          | 0/235 [00:00<?, ?it/s]  0%|          | 0/235 [00:00<?, ?it/s]
+batch_input_ids size = torch.Size([64, 228])
+batch_attention_mask size = torch.Size([64, 228])
+batch_labels size = torch.Size([64, 4, 228, 228])
+Traceback (most recent call last):
+  File "train.py", line 387, in <module>
+    train(model, train_dataloader, epoch, optimizer)
+  File "train.py", line 282, in train
+    loss = train_step(batch_data, model, optimizer, loss_fun)
+  File "train.py", line 203, in train_step
+    logits = model(batch_input_ids, batch_attention_mask, batch_labels)
+  File "/root/miniconda3/envs/py8/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1501, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/root/autodl-tmp/GlobalPointer_pytorch/models/GlobalPointer.py", line 179, in forward
+    context_outputs = self.encoder(input_ids, labels)
+  File "/root/miniconda3/envs/py8/lib/python3.8/site-packages/modelscope/models/base/base_torch_model.py", line 36, in __call__
+    return self.postprocess(self.forward(*args, **kwargs))
+  File "/root/miniconda3/envs/py8/lib/python3.8/site-packages/transformers/models/llama/modeling_llama.py", line 820, in forward
+    outputs = self.model(
+  File "/root/miniconda3/envs/py8/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1501, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/root/miniconda3/envs/py8/lib/python3.8/site-packages/transformers/models/llama/modeling_llama.py", line 668, in forward
+    attention_mask = self._prepare_decoder_attention_mask(
+  File "/root/miniconda3/envs/py8/lib/python3.8/site-packages/transformers/models/llama/modeling_llama.py", line 605, in _prepare_decoder_attention_mask
+    expanded_attn_mask = _expand_mask(attention_mask, inputs_embeds.dtype, tgt_len=input_shape[-1]).to(
+  File "/root/miniconda3/envs/py8/lib/python3.8/site-packages/transformers/models/llama/modeling_llama.py", line 65, in _expand_mask
+    bsz, src_len = mask.size()
+ValueError: too many values to unpack (expected 2)

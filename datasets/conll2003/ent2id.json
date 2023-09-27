@@ -1,0 +1,6 @@
+{
+    "location": 1,
+    "else": 2,
+    "organization": 3,
+    "person": 4
+}

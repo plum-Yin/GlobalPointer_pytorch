@@ -46,25 +46,21 @@ class DataMaker(object):
 
         ent_type_size = len(ent2id)  # 实体类别
 
-        # conll2003
-        try:
-            ent2id = {ent2id[i]: i for i in range(len(ent2id))}
-        except:
-            pass
-
         all_inputs = []
         for sample in datas:
             inputs = self.tokenizer(
-                sample["sentence"],
+                sample["text"],
                 max_length=max_seq_len,
                 truncation=True,
                 padding="max_length",
             )
+            # print(type(inputs))
+            # print(inputs.keys)
 
             labels = None
             if data_type != "predict":
                 ent2token_spans = self.preprocessor.get_ent2token_spans(
-                    sample["sentence"], sample["entities"]
+                    sample["text"], sample["entity_list"]
                 )
                 labels = np.zeros((ent_type_size, max_seq_len, max_seq_len))
                 for start, end, label in ent2token_spans:
@@ -73,11 +69,12 @@ class DataMaker(object):
 
             input_ids = torch.tensor(inputs["input_ids"]).long()
             attention_mask = torch.tensor(inputs["attention_mask"]).long()
-            token_type_ids = torch.tensor(inputs["token_type_ids"]).long()
+            # token_type_ids = torch.tensor(inputs["token_type_ids"]).long()
             if labels is not None:
                 labels = torch.tensor(inputs["labels"]).long()
 
-            sample_input = (sample, input_ids, attention_mask, token_type_ids, labels)
+            # sample_input = (sample, input_ids, attention_mask, token_type_ids, labels)
+            sample_input = (sample, input_ids, attention_mask, labels)
 
             all_inputs.append(sample_input)
         return all_inputs
@@ -94,13 +91,14 @@ class DataMaker(object):
             sample_list.append(sample[0])
             input_ids_list.append(sample[1])
             attention_mask_list.append(sample[2])
-            token_type_ids_list.append(sample[3])
+            # token_type_ids_list.append(sample[3])
             if data_type != "predict":
-                labels_list.append(sample[4])
+                # labels_list.append(sample[4])
+                labels_list.append(sample[3])
 
         batch_input_ids = torch.stack(input_ids_list, dim=0)
         batch_attention_mask = torch.stack(attention_mask_list, dim=0)
-        batch_token_type_ids = torch.stack(token_type_ids_list, dim=0)
+        # batch_token_type_ids = torch.stack(token_type_ids_list, dim=0)
         batch_labels = (
             torch.stack(labels_list, dim=0) if data_type != "predict" else None
         )
@@ -109,7 +107,7 @@ class DataMaker(object):
             sample_list,
             batch_input_ids,
             batch_attention_mask,
-            batch_token_type_ids,
+            # batch_token_type_ids,
             batch_labels,
         )
 
@@ -173,10 +171,14 @@ class GlobalPointer(nn.Module):
         embeddings = embeddings.to(self.device)
         return embeddings
 
-    def forward(self, input_ids, attention_mask, token_type_ids=None):
+    def forward(self, input_ids, attention_mask, labels):
         self.device = input_ids.device
+
+        # context_outputs = self.encoder(input_ids, attention_mask, labels)
         context_outputs = self.encoder(input_ids, attention_mask)
-        # context_outputs = self.encoder(input_ids, attention_mask, token_type_ids)
+        # context_outputs = self.encoder(input_ids, labels)
+        
+        
         # last_hidden_state:(batch_size, seq_len, hidden_size)
         last_hidden_state = context_outputs[0]
 

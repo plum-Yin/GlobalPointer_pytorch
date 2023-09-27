@@ -12,38 +12,34 @@ from transformers import BertTokenizerFast, BertModel
 from models.GlobalPointer import DataMaker, MyDataset, GlobalPointer, MetricsCalculator
 from torch.utils.data import DataLoader, Dataset
 import numpy as np
+# from transformers import AutoTokenizer, AutoModelForCausalLM
 
 config = config.eval_config
 hyper_parameters = config["hyper_parameters"]
-
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 config["num_workers"] = 6 if sys.platform.startswith("linux") else 0
+from transformers import GPT2Model, GPT2Tokenizer, GPT2TokenizerFast
 
 # for reproductivity
 torch.backends.cudnn.deterministic = True
 
-tokenizer = BertTokenizerFast.from_pretrained(
-    config["bert_path"], add_special_tokens=True, do_lower_case=False
-)
 
-
-# def load_data(data_path, data_type="predict"):
-#     if data_type == "predict":
-#         datas = []
-#         with open(data_path, encoding="utf-8") as f:
-#             for line in f:
-#                 line = json.loads(line)
-#                 datas.append(line)
-#         return datas
-#     else:
-#         return json.load(open(data_path, encoding="utf-8"))
+from modelscope import Model, AutoTokenizer
+tokenizer = AutoTokenizer.from_pretrained("modelscope/Llama-2-7b-ms", revision='v1.0.1')
+# tokenizer = BertTokenizerFast.from_pretrained(config["bert_path"], add_special_tokens=True, do_lower_case=False)
+# tokenizer = AutoTokenizer.from_pretrained(config["gpt_path"])
+# tokenizer = GPT2TokenizerFast.from_pretrained(config["gpt_path"])
+# tokenizer.add_special_tokens({"pad_token": "[PAD]"})
 
 
 def load_data(data_path, data_type="predict"):
     if data_type == "predict":
+        datas = []
         with open(data_path, encoding="utf-8") as f:
-            datas = json.load(f)
+            for line in f:
+                line = json.loads(line)
+                datas.append(line)
         return datas
     else:
         return json.load(open(data_path, encoding="utf-8"))
@@ -64,13 +60,13 @@ def data_generator(data_type="predict"):
             config["data_home"], config["exp_name"], config["predict_data"]
         )
         predict_data = load_data(predict_data_path, "predict")
+
     all_data = predict_data
 
     # TODO:句子截取
     max_tok_num = 0
     for sample in all_data:
-        # tokens = tokenizer.tokenize(sample["text"])
-        tokens = tokenizer.tokenize(sample["sentence"])
+        tokens = tokenizer.tokenize(sample["text"])
         max_tok_num = max(max_tok_num, len(tokens))
     assert (
         max_tok_num <= hyper_parameters["max_seq_len"]

@@ -1,0 +1,7 @@
+# pytorch==1.8.1
+wandb==0.10.26 #for logging the result
+transformers==4.1.1
+tqdm==4.54.1
+# torch==1.8.1+cu111 torchvision==0.9.1+cu111 torchaudio==0.8.1 -f https://download.pytorch.org/whl/torch_stable.html
+
+# conda install pytorch==1.12.0 torchvision==0.13.0 torchaudio==0.12.0 cudatoolkit=11.3 -c https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/pytorch/linux-64/

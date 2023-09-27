@@ -18,8 +18,9 @@ import wandb
 from evaluate import load_model
 import time
 
-# new
-from transformers import AutoTokenizer, AutoModelForCausalLM
+# from transformers import GPT2Model, GPT2Tokenizer, GPT2TokenizerFast
+# from transformers import AutoTokenizer, AutoModelForCausalLM
+
 
 config = config.train_config
 hyper_parameters = config["hyper_parameters"]
@@ -54,7 +55,17 @@ elif config["run_type"] == "train":
 # tokenizer = BertTokenizerFast.from_pretrained(
 #     config["bert_path"], add_special_tokens=True, do_lower_case=False
 # )
-tokenizer = AutoTokenizer.from_pretrained(config["gpt_path"])
+# tokenizer = AutoTokenizer.from_pretrained(
+#     config["gpt_path"], add_special_tokens=True, do_lower_case=False
+# )
+# tokenizer = GPT2TokenizerFast.from_pretrained(config["gpt_path"])
+# tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+
+
+from modelscope import Model, AutoTokenizer
+encoder = Model.from_pretrained("modelscope/Llama-2-7b-ms", revision='v1.0.1', device_map='auto', torch_dtype=torch.float16)
+tokenizer = AutoTokenizer.from_pretrained("modelscope/Llama-2-7b-ms", revision='v1.0.1')
+
 
 
 def load_data(data_path, data_type="train"):
@@ -65,7 +76,7 @@ def load_data(data_path, data_type="train"):
         data_type (str, optional): 数据类型. Defaults to "train".
 
     Returns:
-        (json): train和valid中一条数据格式：{"sentence":"","entity_list":[(start, end, label), (start, end, label)...]}
+        (json): train和valid中一条数据格式：{"text":"","entity_list":[(start, end, label), (start, end, label)...]}
     """
     if data_type == "train" or data_type == "valid":
         datas = []
@@ -73,7 +84,7 @@ def load_data(data_path, data_type="train"):
             for line in f:
                 line = json.loads(line)
                 item = {}
-                item["sentence"] = line["sentence"]
+                item["text"] = line["text"]
                 item["entity_list"] = []
                 for k, v in line["label"].items():
                     for spans in v.values():
@@ -122,7 +133,7 @@ def data_generator(data_type="train"):
     # TODO:句子截取
     max_tok_num = 0
     for sample in all_data:
-        tokens = tokenizer(sample["sentence"])["input_ids"]
+        tokens = tokenizer(sample["text"])["input_ids"]
         max_tok_num = max(max_tok_num, len(tokens))
     assert (
         max_tok_num <= hyper_parameters["max_seq_len"]
@@ -177,30 +188,56 @@ def train_step(batch_train, model, optimizer, criterion):
         batch_samples,
         batch_input_ids,
         batch_attention_mask,
-        batch_token_type_ids,
         batch_labels,
     ) = batch_train
-    batch_input_ids, batch_attention_mask, batch_token_type_ids, batch_labels = (
+    batch_input_ids, batch_attention_mask, batch_labels = (
         batch_input_ids.to(device),
         batch_attention_mask.to(device),
-        batch_token_type_ids.to(device),
         batch_labels.to(device),
     )
 
-    logits = model(batch_input_ids, batch_attention_mask)
-    # logits = model(batch_input_ids, batch_attention_mask, batch_token_type_ids)
-
+    print(f"batch_input_ids size = {batch_input_ids.shape}")
+    print(f"batch_attention_mask size = {batch_attention_mask.shape}")
+    print(f"batch_labels size = {batch_labels.shape}")
+    # batch_labels = batch_labels[:, :, :, 0]
+    logits = model(batch_input_ids, batch_attention_mask, batch_labels)
     loss = criterion(batch_labels, logits)
-
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
-
     return loss.item()
 
 
+# def train_step(batch_train, model, optimizer, criterion):
+#     # batch_input_ids:(batch_size, seq_len)    batch_labels:(batch_size, ent_type_size, seq_len, seq_len)
+#     (
+#         batch_samples,
+#         batch_input_ids,
+#         batch_attention_mask,
+#         batch_token_type_ids,
+#         batch_labels,
+#     ) = batch_train
+#     batch_input_ids, batch_attention_mask, batch_token_type_ids, batch_labels = (
+#         batch_input_ids.to(device),
+#         batch_attention_mask.to(device),
+#         batch_token_type_ids.to(device),
+#         batch_labels.to(device),
+#     )
+
+#     logits = model(batch_input_ids, batch_attention_mask, batch_token_type_ids)
+
+#     loss = criterion(batch_labels, logits)
+
+#     optimizer.zero_grad()
+#     loss.backward()
+#     optimizer.step()
+
+#     return loss.item()
+
+# encoder = GPT2Model.from_pretrained(config["gpt_path"])
+# encoder = AutoModelForCausalLM.from_pretrained(config["gpt_path"])
+
 # encoder = BertModel.from_pretrained(config["bert_path"])
-encoder = AutoModelForCausalLM.from_pretrained(config["gpt_path"])
 model = GlobalPointer(encoder, ent_type_size, 64)
 model = model.to(device)
 
@@ -270,23 +307,43 @@ def valid_step(batch_valid, model):
         batch_samples,
         batch_input_ids,
         batch_attention_mask,
-        batch_token_type_ids,
         batch_labels,
     ) = batch_valid
-    batch_input_ids, batch_attention_mask, batch_token_type_ids, batch_labels = (
+    batch_input_ids, batch_attention_mask, batch_labels = (
         batch_input_ids.to(device),
         batch_attention_mask.to(device),
-        batch_token_type_ids.to(device),
         batch_labels.to(device),
     )
     with torch.no_grad():
         logits = model(batch_input_ids, batch_attention_mask)
-        # logits = model(batch_input_ids, batch_attention_mask, batch_token_type_ids)
     sample_f1, sample_precision, sample_recall = metrics.get_evaluate_fpr(
         logits, batch_labels
     )
 
     return sample_f1, sample_precision, sample_recall
+
+
+# def valid_step(batch_valid, model):
+#     (
+#         batch_samples,
+#         batch_input_ids,
+#         batch_attention_mask,
+#         batch_token_type_ids,
+#         batch_labels,
+#     ) = batch_valid
+#     batch_input_ids, batch_attention_mask, batch_token_type_ids, batch_labels = (
+#         batch_input_ids.to(device),
+#         batch_attention_mask.to(device),
+#         batch_token_type_ids.to(device),
+#         batch_labels.to(device),
+#     )
+#     with torch.no_grad():
+#         logits = model(batch_input_ids, batch_attention_mask, batch_token_type_ids)
+#     sample_f1, sample_precision, sample_recall = metrics.get_evaluate_fpr(
+#         logits, batch_labels
+#     )
+
+#     return sample_f1, sample_precision, sample_recall
 
 
 def valid(model, dataloader):

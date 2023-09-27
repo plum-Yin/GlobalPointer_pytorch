@@ -5,12 +5,11 @@ LastEditors: GodK
 import time
 
 common = {
-    "exp_name": "conll_2003",
-    # "exp_name": "cluener",
+    "exp_name": "conll2003",
     "encoder": "BERT",
-    "data_home": "./datasets",
-    "bert_path": "bert-base-chinese",  # bert-base-chinese or other plm from https://huggingface.co/models
-    "gpt_path": "uer/gpt2-chinese-cluecorpussmall",
+    "data_home": "/root/autodl-tmp/GlobalPointer_pytorch/datasets",
+    "bert_path": "bert-base-cased",  # bert-base-chinese or other plm from https://huggingface.co/models
+    "gpt_path": "PlumYin/Vicuna-7B",
     "run_type": "train",  # train, eval
     "f1_2_save": 0.5,  # 存模型的最低f1值
     "logger": "default",  # wandb or default，default意味着只输出日志到控制台
@@ -26,25 +25,24 @@ train_config = {
     "train_data": "train.json",
     "valid_data": "dev.json",
     "test_data": "dev.json",
-    # "ent2id": "ent2id.json",
-    "ent2id": "labels.json",
+    "ent2id": "ent2id.json",
     "path_to_save_model": "./outputs",  # 在logger不是wandb时生效
     "hyper_parameters": {
         "lr": 2e-5,
         "batch_size": 64,
         "epochs": 10,
         "seed": 2333,
-        "max_seq_len": 128,
+        "max_seq_len": 256,
         "scheduler": "CAWR",  # CAWR, Step, None
     },
 }
 
 eval_config = {
-    "model_state_dir": "./outputs/conll_2003/",  # 预测时注意填写模型路径（时间tag文件夹）
+    "model_state_dir": "./outputs/cluener/",  # 预测时注意填写模型路径（时间tag文件夹）
     "run_id": "",
     "last_k_model": 1,  # 取倒数第几个model_state
     "predict_data": "test.json",
-    "ent2id": "labels.json",
+    "ent2id": "ent2id.json",
     "save_res_dir": "./results",
     "hyper_parameters": {
         "batch_size": 16,
