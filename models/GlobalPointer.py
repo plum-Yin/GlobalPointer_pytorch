@@ -175,8 +175,8 @@ class GlobalPointer(nn.Module):
         self.device = input_ids.device
 
         # context_outputs = self.encoder(input_ids, attention_mask, labels)
-        context_outputs = self.encoder(input_ids, attention_mask)
-        # context_outputs = self.encoder(input_ids, labels)
+        context_outputs = self.encoder(input_ids, attention_mask) # oom
+        # context_outputs = self.encoder(input_ids, labels) # ValueError: too many values to unpack
         
         
         # last_hidden_state:(batch_size, seq_len, hidden_size)
